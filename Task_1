@@ -1,0 +1,50 @@
+import cv2
+import matplotlib.pyplot as plt
+
+# Load image
+image_path = r'C:\Users\SKUNGU\Documents\Python\img_1.bmp'
+img = cv2.imread(image_path)
+if img is None:
+    raise FileNotFoundError(f"Unable to load image at {image_path}")
+
+# Parameters to define minimum and maximum sizes for objects
+min_size = 100  # Minimum contour area to consider
+max_size = 10000  # Maximum size to consider
+
+# Convert image to RGB for displaying
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+# Convert to grayscale
+gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+# Threshold the grayscale image
+threshold_value = 50
+_, binary_img = cv2.threshold(gray_img, threshold_value, 255, cv2.THRESH_BINARY_INV)
+
+# Find contours (objects)
+contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# Filter contours based on area
+filtered_contours = [c for c in contours if min_size <= cv2.contourArea(c) <= max_size]
+
+# Label and draw filtered contours
+labeled_img = cv2.cvtColor(binary_img, cv2.COLOR_GRAY2RGB)
+for i, contour in enumerate(filtered_contours, start=1):
+    # Compute centroid for labeling
+    M = cv2.moments(contour)
+    if M["m00"] != 0:
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+        cv2.putText(labeled_img, str(i), (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+    # Draw contours
+    cv2.drawContours(labeled_img, [contour], -1, (0, 255, 0), 2)
+
+# Display labeled threshold image
+plt.figure(figsize=(10, 8))
+plt.imshow(labeled_img)
+plt.axis("off")
+plt.title(f"Labeled Objects - Total Count: {len(filtered_contours)}")
+plt.show()
+
+# Print total number of detected objects
+print("Total objects detected:", len(filtered_contours))
